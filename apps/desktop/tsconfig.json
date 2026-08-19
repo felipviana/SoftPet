@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "noEmit": true,
+    "paths": {
+      "@softpet/pet-format": ["../../packages/pet-format/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "electron.vite.config.ts"]
+}

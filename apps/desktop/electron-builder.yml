@@ -1,0 +1,48 @@
+# Empacotamento do Softpet para Windows.
+#
+# Gera dois artefatos, e os dois servem a momentos diferentes:
+#
+#   - **portable**: um .exe unico, que roda sem instalar nada. E o que se manda
+#     para um colega experimentar hoje, sem pedir permissao de nada a ninguem.
+#   - **nsis**: o instalador de verdade, com atalho e desinstalacao. E o que vai
+#     para a empresa.
+#
+# A instalacao e **por usuario** (`perMachine: false`) de proposito: instalar
+# para a maquina inteira exige direitos de administrador, e um bichinho de tela
+# nao e motivo para envolver o TI em cada maquina.
+
+appId: dev.softpet.app
+productName: Softpet
+
+directories:
+  output: ../../release
+  buildResources: build
+
+# Todo o codigo de execucao ja foi empacotado pelo Vite em `out/`; nao ha
+# dependencia de runtime em node_modules. Ser explicito aqui evita que o
+# electron-builder varra o monorepo inteiro atras do que nao precisa.
+files:
+  - out/**/*
+  - package.json
+
+asar: true
+
+win:
+  icon: build/icon.png
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Softpet
+  artifactName: Softpet-Setup-${version}.${ext}
+
+portable:
+  artifactName: Softpet-${version}-portatil.${ext}

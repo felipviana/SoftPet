@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:;"
+    />
+    <title>Softpet</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        /* A janela e transparente: qualquer cor aqui viraria um retangulo na tela. */
+        background: transparent;
+        user-select: none;
+        cursor: default;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+
+      #pet {
+        display: block;
+        width: 100%;
+        height: 100%;
+        /* Sprite de pixel: interpolacao suave borraria as bordas. */
+        image-rendering: pixelated;
+      }
+
+      #pet.interactive {
+        cursor: grab;
+      }
+
+      #pet.dragging {
+        cursor: grabbing;
+      }
+
+      /* --- balao ---------------------------------------------------------- */
+
+      .balloon {
+        position: absolute;
+        width: 182px;
+        box-sizing: border-box;
+        padding: 10px 12px;
+        border-radius: 12px;
+        /* O balao pode cair sobre qualquer papel de parede: fundo opaco escuro
+           com texto claro e a combinacao que sobrevive a qualquer um deles. */
+        background: #1e2430;
+        color: #eef1f6;
+        border: 1px solid #39414f;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 45%);
+        font-size: 12px;
+        line-height: 1.4;
+        cursor: default;
+      }
+
+      /* A ponta que aponta para o pet. Um quadrado girado herda fundo e borda,
+         entao acompanha o tema sem precisar de um segundo conjunto de cores. */
+      .balloon::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 10px;
+        height: 10px;
+        margin-top: -5px;
+        background: #1e2430;
+        transform: rotate(45deg);
+      }
+
+      .balloon[data-side='right']::after {
+        left: -6px;
+        border-left: 1px solid #39414f;
+        border-bottom: 1px solid #39414f;
+      }
+
+      .balloon[data-side='left']::after {
+        right: -6px;
+        border-right: 1px solid #39414f;
+        border-top: 1px solid #39414f;
+      }
+
+      .balloon-header {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .balloon-title {
+        font-weight: 600;
+      }
+
+      .balloon-body {
+        margin: 6px 0 0;
+        color: #b9c1cd;
+      }
+
+      .balloon-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .balloon-actions button {
+        flex: 1;
+        padding: 5px 8px;
+        border: 1px solid #4a5464;
+        border-radius: 7px;
+        background: #2a3240;
+        color: #eef1f6;
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+      }
+
+      .balloon-actions button:hover {
+        background: #354055;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="pet"></canvas>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

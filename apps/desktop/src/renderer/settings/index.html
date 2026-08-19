@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' ws: wss:;"
+    />
+    <title>Configurações do pet</title>
+    <style>
+      :root {
+        --bg: #151a22;
+        --nav: #11151c;
+        --panel: #1e2430;
+        --panel-2: #252c3a;
+        --line: #39414f;
+        --text: #eef1f6;
+        --muted: #98a2b3;
+        --accent: #6ea8fe;
+        --danger: #f2777a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        height: 100%;
+      }
+
+      body {
+        margin: 0;
+        display: flex;
+        background: var(--bg);
+        color: var(--text);
+        font: 13px/1.5 'Segoe UI', system-ui, sans-serif;
+      }
+
+      /* --- navegacao a esquerda ------------------------------------------- */
+      nav {
+        width: 188px;
+        flex: none;
+        background: var(--nav);
+        border-right: 1px solid var(--line);
+        padding: 16px 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      nav .brand {
+        font-weight: 600;
+        font-size: 14px;
+        padding: 0 10px 14px;
+      }
+
+      nav button {
+        display: block;
+        width: 100%;
+        text-align: left;
+        padding: 9px 10px;
+        border: none;
+        border-radius: 8px;
+        background: none;
+        color: var(--muted);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      nav button:hover {
+        background: var(--panel);
+        color: var(--text);
+      }
+
+      nav button[aria-current='true'] {
+        background: var(--panel-2);
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      nav .spacer {
+        flex: 1;
+      }
+
+      /* --- conteudo -------------------------------------------------------- */
+      main {
+        flex: 1;
+        min-width: 0;
+        overflow-y: auto;
+        padding: 22px 26px 40px;
+      }
+
+      .pane[hidden] {
+        display: none;
+      }
+
+      h1 {
+        font-size: 17px;
+        margin: 0 0 2px;
+      }
+
+      h2 {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+        margin: 24px 0 10px;
+      }
+
+      .sub {
+        color: var(--muted);
+        margin: 0 0 18px;
+      }
+
+      section {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 16px;
+      }
+
+      button {
+        padding: 7px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+        color: var(--text);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:hover:not(:disabled) {
+        border-color: var(--accent);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #0d1524;
+        font-weight: 600;
+      }
+
+      button.link {
+        background: none;
+        border: none;
+        color: var(--muted);
+        padding: 4px 6px;
+        text-decoration: underline;
+      }
+
+      button.link:hover {
+        color: var(--danger);
+      }
+
+      input[type='text'] {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #131822;
+        color: var(--text);
+        font: inherit;
+      }
+
+      input[type='text']:focus {
+        outline: none;
+        border-color: var(--accent);
+      }
+
+      .row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      /* --- pet ativo ------------------------------------------------------- */
+      .active {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .active canvas {
+        width: 96px;
+        height: 96px;
+        flex: none;
+        background: #131822;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        image-rendering: pixelated;
+      }
+
+      .active-name {
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      /* --- biblioteca ------------------------------------------------------ */
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 10px;
+      }
+
+      .card {
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 10px;
+        text-align: center;
+      }
+
+      .card[data-active='true'] {
+        border-color: var(--accent);
+      }
+
+      .card canvas {
+        width: 72px;
+        height: 72px;
+        image-rendering: pixelated;
+      }
+
+      .card .name {
+        font-weight: 600;
+        margin: 4px 0 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .card .meta {
+        color: var(--muted);
+        font-size: 11px;
+        margin-bottom: 8px;
+      }
+
+      /* --- fontes da lojinha ----------------------------------------------- */
+      .sources {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .source {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel-2);
+        padding-right: 2px;
+      }
+
+      .source > button:first-child {
+        border: none;
+        background: none;
+        border-radius: 999px;
+        font-size: 12px;
+        padding: 6px 10px;
+      }
+
+      .source[aria-current='true'] {
+        border-color: var(--accent);
+      }
+
+      .source .drop {
+        border: none;
+        background: none;
+        color: var(--muted);
+        padding: 2px 8px 2px 2px;
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .source .drop:hover {
+        color: var(--danger);
+      }
+
+      /* --- vitrine do repositorio ------------------------------------------ */
+      .repo-list {
+        max-height: 430px;
+        overflow-y: auto;
+        margin-top: 12px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+        gap: 10px;
+        align-content: start;
+      }
+
+      .repo-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 8px;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 10px;
+      }
+
+      /* 96 e o tamanho em que a miniatura e guardada: exibir 1:1 mantem o pixel
+         art nitido, sem meio pixel de interpolacao. */
+      .repo-thumb {
+        width: 96px;
+        height: 96px;
+        flex: none;
+        border-radius: 8px;
+        background: #131822;
+        image-rendering: pixelated;
+      }
+
+      .repo-name {
+        width: 100%;
+        font-weight: 600;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      /* Nos acervos curados o slug e "<pet>--<autor>"; separar da para ler o
+         nome do personagem sem o ruido do login de quem enviou. */
+      .repo-author {
+        width: 100%;
+        color: var(--muted);
+        font-size: 11px;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .repo-item button {
+        width: 100%;
+        margin-top: 2px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .chips button {
+        font-size: 11px;
+        padding: 5px 9px;
+      }
+
+      .note {
+        color: var(--muted);
+        font-size: 12px;
+        margin: 10px 0 0;
+      }
+
+      .error {
+        color: var(--danger);
+        font-size: 12px;
+        margin: 10px 0 0;
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 10px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      /* --- caixa de ajuda --------------------------------------------------- */
+      .help {
+        margin-top: 14px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: #131822;
+      }
+
+      .help > summary {
+        cursor: pointer;
+        padding: 10px 12px;
+        font-weight: 600;
+        list-style: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .help > summary::-webkit-details-marker {
+        display: none;
+      }
+
+      /* Bolinha com "?" — sinaliza ajuda sem depender de biblioteca de ícones. */
+      .help > summary::before {
+        content: '?';
+        flex: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #0d1524;
+        font-size: 12px;
+        line-height: 18px;
+        text-align: center;
+      }
+
+      .help > summary::after {
+        content: '▾';
+        margin-left: auto;
+        color: var(--muted);
+      }
+
+      .help[open] > summary::after {
+        content: '▴';
+      }
+
+      .help-body {
+        padding: 0 12px 14px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+      }
+
+      .help-body p,
+      .help-body ol {
+        margin: 12px 0 0;
+      }
+
+      .help-body ol {
+        padding-left: 20px;
+      }
+
+      .help-body li + li {
+        margin-top: 6px;
+      }
+
+      .help-body strong {
+        color: var(--text);
+      }
+
+      .help-body code {
+        background: var(--panel-2);
+        border-radius: 4px;
+        padding: 1px 5px;
+        font-size: 12px;
+      }
+
+      .help-rows {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 12px;
+      }
+
+      .help-rows td {
+        padding: 3px 8px 3px 0;
+      }
+
+      .help-rows td:first-child {
+        color: var(--text);
+        white-space: nowrap;
+        width: 1px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <div class="brand">Softpet</div>
+      <button data-pane="pet" aria-current="true">Meu pet</button>
+      <button data-pane="store">Lojinha de pets</button>
+      <button data-pane="debug">Depuração</button>
+      <div class="spacer"></div>
+      <button data-pane="app">Aplicativo</button>
+    </nav>
+
+    <main>
+      <!-- ------------------------------------------------ Meu pet -->
+      <div class="pane" id="pane-pet">
+        <h1>Meu pet</h1>
+        <p class="sub">O pet que está na tela, e os que você já tem.</p>
+
+        <h2>Pet ativo</h2>
+        <section>
+          <div class="active">
+            <canvas id="active-preview" width="96" height="96"></canvas>
+            <div style="flex: 1">
+              <div class="active-name" id="active-name">—</div>
+              <div id="active-meta" style="color: var(--muted)"></div>
+              <div class="row" style="margin-top: 12px">
+                <label for="size">Tamanho</label>
+                <input type="range" id="size" min="60" max="360" step="10" style="flex: 1" />
+                <span id="size-value" style="width: 48px; text-align: right"></span>
+                <button id="toggle">Ocultar</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <h2>Biblioteca</h2>
+        <section>
+          <div class="grid" id="library"></div>
+          <p class="note" id="library-note"></p>
+        </section>
+
+        <h2>Importar do computador</h2>
+        <section>
+          <div class="row">
+            <button id="import-folder">Importar de uma pasta…</button>
+            <button id="import-zip">Importar de um arquivo .zip…</button>
+          </div>
+          <p class="note">
+            A pasta precisa ter o <code>pet.json</code> e a folha de desenhos. Para trazer pets
+            prontos da internet, use a <strong>Lojinha de pets</strong>.
+          </p>
+          <p class="error" id="local-error" hidden></p>
+
+          <details class="help">
+            <summary>Quer criar seu próprio pet?</summary>
+            <div class="help-body">
+              <p>Um pet são só <strong>dois arquivos dentro de uma pasta</strong>:</p>
+              <ol>
+                <li>
+                  <code>pet.json</code> — a ficha dele. Um bloco de texto com o nome e uma
+                  descrição.
+                </li>
+                <li>
+                  <strong>uma imagem</strong> com todos os desenhos da animação lado a lado, como
+                  uma cartela de figurinhas.
+                </li>
+              </ol>
+
+              <p>
+                A cartela tem <strong>1536 × 1872 pixels</strong>: <strong>8 colunas por 9
+                linhas</strong>, cada quadradinho medindo 192 × 208. Cada linha é uma animação, e
+                sempre nesta ordem:
+              </p>
+
+              <table class="help-rows">
+                <tr><td>Linha 1</td><td>parado (é a mais importante)</td></tr>
+                <tr><td>Linha 2</td><td>andando para a direita</td></tr>
+                <tr><td>Linha 3</td><td>andando para a esquerda</td></tr>
+                <tr><td>Linha 4</td><td>acenando</td></tr>
+                <tr><td>Linha 5</td><td>pulando</td></tr>
+                <tr><td>Linha 6</td><td>deu erro</td></tr>
+                <tr><td>Linha 7</td><td>esperando</td></tr>
+                <tr><td>Linha 8</td><td>trabalhando</td></tr>
+                <tr><td>Linha 9</td><td>terminou a tarefa</td></tr>
+              </table>
+
+              <p>
+                Sobrou quadradinho no fim de uma linha? Deixe transparente, sem desenho nenhum.
+              </p>
+
+              <p><strong>Três jeitos de conseguir os desenhos:</strong></p>
+              <ol>
+                <li>
+                  <strong>Peça a uma IA de imagem.</strong> Descreva o personagem e peça os
+                  desenhos nessas nove situações, em fundo transparente. É o caminho mais rápido
+                  para quem não desenha.
+                </li>
+                <li>
+                  <strong>Desenhe</strong>, se você ou alguém do time trabalha com pixel art.
+                </li>
+                <li>
+                  <strong>Aproveite um pet que você já tem.</strong> Abra a pasta abaixo, copie
+                  a cartela de um pet da Lojinha e pinte por cima: os tamanhos e as posições já
+                  estarão certos, que é a parte chata.
+                </li>
+              </ol>
+
+              <div class="row" style="margin-top: 12px">
+                <button id="open-library">Abrir a pasta dos meus pets</button>
+              </div>
+
+              <p>
+                Com os dois arquivos prontos na mesma pasta, é só clicar em
+                <strong>Importar de uma pasta</strong> aqui em cima.
+              </p>
+
+              <p>
+                Mais adiante o app vai fazer isso sozinho: você tira uma foto e ele desenha o
+                pet. Até lá, é por aqui.
+              </p>
+            </div>
+          </details>
+        </section>
+      </div>
+
+      <!-- ------------------------------------------------ Lojinha -->
+      <div class="pane" id="pane-store" hidden>
+        <h1>Lojinha de pets</h1>
+        <p class="sub">Acervos públicos de onde trazer pets novos.</p>
+
+        <h2>Fontes</h2>
+        <section>
+          <div class="sources" id="sources"></div>
+
+          <div class="row" style="margin-top: 14px">
+            <input
+              type="text"
+              id="source-url"
+              placeholder="Adicionar fonte: github.com/dono/repo, petdex.dev/pets/nome, ou o .zip de uma galeria"
+            />
+            <button id="source-open" class="primary">Abrir</button>
+            <button id="source-add">Salvar fonte</button>
+          </div>
+          <p class="note">
+            Salvar deixa a fonte fixa aqui. Abrir consulta uma vez, sem guardar.
+          </p>
+        </section>
+
+        <h2>Pets da fonte</h2>
+        <section>
+          <div id="repo-result"></div>
+          <p class="error" id="import-error" hidden></p>
+        </section>
+
+        <h2>Acesso ao GitHub</h2>
+        <section>
+          <div class="row">
+            <input
+              type="text"
+              id="gh-token"
+              placeholder="Token do GitHub (opcional) — sobe o limite de 60 para 5.000 consultas por hora"
+            />
+            <button id="gh-save">Salvar</button>
+          </div>
+          <p class="note" id="quota"></p>
+        </section>
+      </div>
+
+      <!-- ------------------------------------------------ Depuração -->
+      <div class="pane" id="pane-debug" hidden>
+        <h1>Depuração</h1>
+        <p class="sub">Forçar estados a qualquer momento.</p>
+
+        <h2>Animações do pet ativo</h2>
+        <section>
+          <div class="chips" id="animations"></div>
+          <p class="note">Ajuda a conferir emenda de frame e salto de pose.</p>
+        </section>
+
+        <h2>Notificações de exemplo</h2>
+        <section>
+          <div class="chips" id="notifications"></div>
+          <p class="note">Exercitam o balão e a máquina de prioridade.</p>
+        </section>
+      </div>
+
+      <!-- ------------------------------------------------ Aplicativo -->
+      <div class="pane" id="pane-app" hidden>
+        <h1>Aplicativo</h1>
+        <p class="sub">O pet continua na bandeja depois de fechar esta janela.</p>
+        <section>
+          <button id="quit">Sair do Softpet</button>
+        </section>
+      </div>
+    </main>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,10 @@
+node_modules/
+out/
+release/
+dist/
+dist-win/
+# icone gerado por `npm run icon`, que o `npm run dist` ja executa
+build/
+*.log
+.env
+.env.local
