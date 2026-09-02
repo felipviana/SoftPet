@@ -17,10 +17,10 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Baixar o codigo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Preparar o Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
@@ -34,6 +34,7 @@ jobs:
           $base = (Get-Content apps/desktop/package.json | ConvertFrom-Json).version.Split('.')
           $version = "$($base[0]).$($base[1]).${{ github.run_number }}"
           npm version $version --workspace @softpet/desktop --no-git-tag-version
+          "SOFTPET_VERSION=$version" >> $env:GITHUB_ENV
 
       - name: Validar o projeto
         run: npm run typecheck
@@ -43,8 +44,19 @@ jobs:
           npm run icon --workspace @softpet/desktop
           npm run build --workspace @softpet/desktop
 
-      - name: Publicar executaveis e metadados
-        run: npx electron-builder --win --publish always
+      - name: Gerar executaveis e metadados de atualizacao
+        run: npx electron-builder --win --publish never
         working-directory: apps/desktop
+
+      - name: Publicar a GitHub Release
+        shell: pwsh
+        run: |
+          $assets = Get-ChildItem release -File | ForEach-Object FullName
+          if (-not $assets) { throw 'Nenhum artefato foi gerado em release/.' }
+          gh release create "v$env:SOFTPET_VERSION" $assets `
+            --title "Softpet v$env:SOFTPET_VERSION" `
+            --target "${{ github.sha }}" `
+            --generate-notes `
+            --latest
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
