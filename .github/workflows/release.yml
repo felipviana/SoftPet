@@ -1,0 +1,50 @@
+name: Publicar atualizacao
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: softpet-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - name: Baixar o codigo
+        uses: actions/checkout@v4
+
+      - name: Preparar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Definir a versao da atualizacao
+        shell: pwsh
+        run: |
+          $base = (Get-Content apps/desktop/package.json | ConvertFrom-Json).version.Split('.')
+          $version = "$($base[0]).$($base[1]).${{ github.run_number }}"
+          npm version $version --workspace @softpet/desktop --no-git-tag-version
+
+      - name: Validar o projeto
+        run: npm run typecheck
+
+      - name: Gerar o icone e compilar
+        run: |
+          npm run icon --workspace @softpet/desktop
+          npm run build --workspace @softpet/desktop
+
+      - name: Publicar executaveis e metadados
+        run: npx electron-builder --win --publish always
+        working-directory: apps/desktop
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

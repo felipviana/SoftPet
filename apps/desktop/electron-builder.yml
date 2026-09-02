@@ -14,13 +14,19 @@
 appId: dev.softpet.app
 productName: Softpet
 
+publish:
+  provider: github
+  owner: felipviana
+  repo: SoftPet
+  releaseType: release
+
 directories:
   output: ../../release
   buildResources: build
 
-# Todo o codigo de execucao ja foi empacotado pelo Vite em `out/`; nao ha
-# dependencia de runtime em node_modules. Ser explicito aqui evita que o
-# electron-builder varra o monorepo inteiro atras do que nao precisa.
+# O codigo da aplicacao e empacotado pelo Vite em `out/`. Dependencias de
+# producao, como `electron-updater`, sao recolhidas automaticamente pelo
+# electron-builder a partir do package.json.
 files:
   - out/**/*
   - package.json

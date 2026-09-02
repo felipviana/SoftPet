@@ -14,15 +14,18 @@
     "dist": "npm run icon && npm run build && node scripts/dist.cjs"
   },
   "devDependencies": {
+    "@softpet/pet-format": "*",
     "@types/node": "^24.13.3",
     "electron": "43.4.1",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^5.0.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.6",
-    "@softpet/pet-format": "*",
-    "electron-builder": "^26.15.3"
+    "vite": "^7.3.6"
   },
   "author": {
     "name": "felipviana"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

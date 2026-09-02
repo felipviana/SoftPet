@@ -40,6 +40,7 @@ import { loadPet, type LoadedPet } from './pet-loader.js'
 import { SettingsWindow } from './settings-window.js'
 import { SettingsStore } from './store.js'
 import { createTray } from './tray.js'
+import { startAutoUpdate } from './auto-update.js'
 
 // Uma segunda instancia significaria dois pets na tela disputando a mesma
 // posicao salva.
@@ -71,39 +72,32 @@ async function askForPetDirectory(): Promise<string | null> {
 }
 
 /**
- * Resolve o pet inicial: linha de comando, preferencias, primeiro da
- * biblioteca, ou pergunta. Sai do app se o usuario desistir - sem pet nao ha o
- * que mostrar.
+ * Resolve o pet inicial: linha de comando, preferencias ou primeiro da
+ * biblioteca. Uma biblioteca vazia e um estado valido: nesse caso o menu abre
+ * sem overlay para o usuario escolher um pet na lojinha ou importa-lo depois.
  */
 async function resolveInitialPet(): Promise<LoadedPet | null> {
   const installed = await listInstalled()
   const salvo = store.get("activePetId")
-  let candidate =
+  const candidate =
     petPathFromArgv() ??
     installed.find((entry) => entry.id === salvo)?.dir ??
     installed[0]?.dir ??
     null
 
-  for (;;) {
-    if (candidate === null) {
-      candidate = await askForPetDirectory()
-      if (candidate === null) return null
-    }
+  if (candidate === null) return null
 
-    try {
-      return await loadPet(candidate)
-    } catch (error) {
-      const { response } = await dialog.showMessageBox({
-        type: 'error',
-        title: 'Nao foi possivel carregar o pet',
-        message: (error as Error).message,
-        buttons: ['Escolher outra pasta', 'Sair'],
-        defaultId: 0,
-        cancelId: 1,
-      })
-      if (response === 1) return null
-      candidate = null
-    }
+  try {
+    return await loadPet(candidate)
+  } catch (error) {
+    await dialog.showMessageBox({
+      type: 'error',
+      title: 'Nao foi possivel carregar o pet',
+      message: (error as Error).message,
+      detail: 'O Softpet sera aberto sem um pet ativo para voce escolher outro no menu.',
+      buttons: ['Abrir o menu'],
+    })
+    return null
   }
 }
 
@@ -425,23 +419,21 @@ app.whenReady().then(async () => {
   registerOverlayIpc()
   registerSettingsIpc()
 
-  const initial = await resolveInitialPet()
-  if (initial === null) {
-    app.quit()
-    return
-  }
-
   setGitHubToken(store.get('githubToken'))
   void prunePreviewCache()
 
-  const active = await ensureInLibrary(initial)
-  pet = active
+  const initial = await resolveInitialPet()
+  if (initial !== null) {
+    const active = await ensureInLibrary(initial)
+    pet = active
+    overlay = new OverlayWindow(store, active.manifest.frame)
+  }
 
-  overlay = new OverlayWindow(store, active.manifest.frame)
-  tray = createTray(active, () => settingsWindow.open())
+  tray = createTray(pet, () => settingsWindow.open())
+  settingsWindow.open()
+  startAutoUpdate()
 
   if (process.argv.includes('--demo')) startDemo()
-  if (process.argv.includes('--settings')) settingsWindow.open()
 })
 
 /**

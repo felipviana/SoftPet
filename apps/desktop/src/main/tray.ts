@@ -39,13 +39,13 @@ function trayIcon(pet: LoadedPet): NativeImage {
  * da conta de escolher entre milhares de pets de um repositorio — isso pede
  * lista, busca e miniatura, e por isso virou janela.
  */
-export function createTray(pet: LoadedPet, openSettings: () => void): Tray {
-  const tray = new Tray(trayIcon(pet))
-  tray.setToolTip(`${pet.manifest.displayName} — Softpet`)
+export function createTray(pet: LoadedPet | null, openSettings: () => void): Tray {
+  const tray = new Tray(pet === null ? nativeImage.createEmpty() : trayIcon(pet))
+  tray.setToolTip(pet === null ? 'Softpet — escolha seu pet' : `${pet.manifest.displayName} — Softpet`)
 
   tray.setContextMenu(
     Menu.buildFromTemplate([
-      { label: pet.manifest.displayName, enabled: false },
+      { label: pet?.manifest.displayName ?? 'Nenhum pet selecionado', enabled: false },
       { type: 'separator' },
       { label: 'Configuracoes do pet', click: openSettings },
       { type: 'separator' },

@@ -156,6 +156,18 @@ Sai em `release/`: um portátil (`.exe` único, roda sem instalar) e um instalad
 NSIS. Os dois pesam ~99 MB, dos quais **o código são 152 KB** — o resto é o
 runtime do Chromium.
 
+### Atualizações automáticas
+
+Cada push na branch `main` dispara o workflow `Publicar atualizacao` no GitHub
+Actions. Ele cria uma versão crescente, publica uma GitHub Release e envia o
+instalador, o portátil, o `latest.yml` e os blocos usados na atualização.
+
+Executáveis gerados a partir da versão que inclui o atualizador consultam essa
+release ao iniciar e a cada quatro horas. Quando uma versão nova termina de ser
+baixada, o usuário pode reiniciar e instalar imediatamente ou deixar a
+instalação acontecer ao fechar o Softpet. Executáveis distribuídos antes da
+inclusão desse mecanismo precisam ser substituídos uma última vez manualmente.
+
 A instalação é **por usuário**, sem pedir administrador. O ícone é gerado por
 código (`scripts/make-icon.cjs`) em vez de versionado como binário.
 

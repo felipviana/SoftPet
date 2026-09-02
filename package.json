@@ -15,5 +15,10 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "allowScripts": {
+    "electron@43.4.1": true,
+    "esbuild@0.25.12": true,
+    "esbuild@0.28.2": true
   }
 }
