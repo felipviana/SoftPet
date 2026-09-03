@@ -71,10 +71,15 @@ Deno.serve(async (request) => {
     if (checked.error) throw checked.error
     if (checked.data !== true) return json({ error: 'Já existe um pet com esse nome.' }, 409)
 
-    const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+    const installationId = String(form.get('installationId') ?? '').trim()
+    const identity = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      installationId,
+    )
+      ? `installation:${installationId}`
+      : `legacy-ip:${request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'}`
     const fingerprintBytes = await crypto.subtle.digest(
       'SHA-256',
-      new TextEncoder().encode(`${forwarded}:${new Date().toISOString().slice(0, 10)}`),
+      new TextEncoder().encode(identity),
     )
     const fingerprint = [...new Uint8Array(fingerprintBytes)]
       .map((byte) => byte.toString(16).padStart(2, '0'))
@@ -84,7 +89,7 @@ Deno.serve(async (request) => {
       request_fingerprint: fingerprint,
     })
     if (slot.error) throw slot.error
-    if (slot.data !== true) return json({ error: 'Limite de 10 envios por dia atingido.' }, 429)
+    if (slot.data !== true) return json({ error: 'Seu limite de 10 envios por dia foi atingido.' }, 429)
 
     const manifestText = await manifestFile.text()
     const manifest = JSON.parse(manifestText) as Record<string, unknown>

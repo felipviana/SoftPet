@@ -416,7 +416,12 @@ function registerSettingsIpc(): void {
     if (normalizedName === '') throw new CommunityError('Informe o nome do seu pet.')
     const dir = await askForPetDirectory()
     if (dir === null) return false
-    await submitCommunityPet(dir, normalizedName, typeof authorName === 'string' ? authorName : '')
+    await submitCommunityPet(
+      dir,
+      normalizedName,
+      typeof authorName === 'string' ? authorName : '',
+      store.get('installationId'),
+    )
     return true
   })
 

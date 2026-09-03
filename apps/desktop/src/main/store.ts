@@ -1,4 +1,5 @@
 import { app } from 'electron'
+import { randomUUID } from 'node:crypto'
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 
@@ -10,6 +11,8 @@ export interface Point {
 }
 
 export interface Settings {
+  /** Identifica esta instalacao para limites individuais da comunidade. */
+  installationId: string
   /**
    * Id do pet ativo dentro da biblioteca — **nao** um caminho.
    *
@@ -43,6 +46,7 @@ export interface Settings {
 }
 
 const DEFAULTS: Settings = {
+  installationId: '',
   activePetId: null,
   displaySize: DISPLAY_SIZE.default,
   freeRoam: true,
@@ -70,6 +74,8 @@ export class SettingsStore {
   constructor(file = join(app.getPath('userData'), 'settings.json')) {
     this.#file = file
     this.#settings = this.#read()
+    // Persiste imediatamente ids criados para instalacoes que ainda nao tinham o campo.
+    this.flush()
   }
 
   get all(): Readonly<Settings> {
@@ -96,9 +102,12 @@ export class SettingsStore {
   #read(): Settings {
     try {
       const raw: unknown = JSON.parse(readFileSync(this.#file, 'utf8'))
-      if (typeof raw !== 'object' || raw === null) return { ...DEFAULTS }
+      if (typeof raw !== 'object' || raw === null) {
+        return { ...DEFAULTS, installationId: randomUUID() }
+      }
       const stored = raw as Partial<Settings>
       return {
+        installationId: readInstallationId(stored.installationId),
         activePetId: readActivePetId(stored),
         displaySize: clampDisplaySize(stored.displaySize),
         freeRoam: typeof stored.freeRoam === 'boolean' ? stored.freeRoam : DEFAULTS.freeRoam,
@@ -108,7 +117,7 @@ export class SettingsStore {
       }
     } catch {
       // Arquivo ausente na primeira execucao, ou ilegivel: seguimos com o padrao.
-      return { ...DEFAULTS }
+      return { ...DEFAULTS, installationId: randomUUID() }
     }
   }
 
@@ -134,6 +143,13 @@ export class SettingsStore {
       console.error('[softpet] nao foi possivel gravar as preferencias:', error)
     }
   }
+}
+
+function readInstallationId(value: unknown): string {
+  return typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+    ? value
+    : randomUUID()
 }
 
 function clampDisplaySize(value: unknown): number {

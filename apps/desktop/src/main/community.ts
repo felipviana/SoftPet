@@ -112,7 +112,12 @@ export async function communityPreview(id: string): Promise<PetPreview> {
   return { sheet: files.sheet, sheetFormat: extension, frame: manifest.frame }
 }
 
-export async function submitCommunityPet(dir: string, petName: string, authorName: string): Promise<void> {
+export async function submitCommunityPet(
+  dir: string,
+  petName: string,
+  authorName: string,
+  installationId: string,
+): Promise<void> {
   const loaded = await loadPet(dir)
   const manifestJson = await readFile(join(dir, 'pet.json'), 'utf8')
   const mime = `image/${loaded.sheetFormat}`
@@ -125,5 +130,6 @@ export async function submitCommunityPet(dir: string, petName: string, authorNam
   )
   form.set('authorName', authorName.trim())
   form.set('petName', petName.trim())
+  form.set('installationId', installationId)
   await api('/functions/v1/submit-pet', { method: 'POST', body: form })
 }
