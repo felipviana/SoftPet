@@ -148,6 +148,8 @@ export interface SettingsApi {
   setDisplaySize(size: number): void
   toggleFreeRoam(): Promise<boolean>
   toggleOverlay(): Promise<boolean>
+  /** Recarrega os arquivos e recria a janela do pet ativo. */
+  restartPet(): Promise<boolean>
   checkForUpdates(): Promise<ManualUpdateResult>
   playAnimation(name: string): void
   fireNotification(id: string): void

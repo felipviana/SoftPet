@@ -248,6 +248,7 @@ export class OverlayWindow {
     if (this.#window.isDestroyed()) return
     this.#window.setAlwaysOnTop(true, 'screen-saver')
     this.#window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+    if (this.#window.isVisible()) this.#window.moveTop()
   }
 
   // --- posicionamento -------------------------------------------------------

@@ -152,6 +152,17 @@ async function setActivePet(dir: string): Promise<void> {
   settingsWindow.notifyChanged()
 }
 
+/** Rele os arquivos do pet e substitui apenas a janela transparente. */
+async function restartActivePet(): Promise<boolean> {
+  if (pet === null) return false
+
+  const reloaded = await loadPet(pet.dir)
+  overlay?.destroy()
+  pet = reloaded
+  overlay = new OverlayWindow(store, reloaded.manifest.frame)
+  return true
+}
+
 function toInfo(entry: InstalledPet, activeId: string | null): InstalledPetInfo {
   return {
     id: entry.id,
@@ -416,6 +427,8 @@ function registerSettingsIpc(): void {
   })
 
   ipcMain.handle('settings:toggle-overlay', () => overlay?.toggleVisibility() ?? false)
+
+  ipcMain.handle('settings:restart-pet', () => restartActivePet())
 
   ipcMain.handle('settings:check-updates', () => checkForUpdatesManually())
 

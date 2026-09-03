@@ -93,6 +93,7 @@ const settings: SettingsApi = {
   setDisplaySize: (size) => ipcRenderer.send('settings:display-size', size),
   toggleFreeRoam: () => ipcRenderer.invoke('settings:toggle-free-roam') as Promise<boolean>,
   toggleOverlay: () => ipcRenderer.invoke('settings:toggle-overlay') as Promise<boolean>,
+  restartPet: () => ipcRenderer.invoke('settings:restart-pet') as Promise<boolean>,
   checkForUpdates: () =>
     ipcRenderer.invoke('settings:check-updates') as Promise<ManualUpdateResult>,
   playAnimation: (name) => ipcRenderer.send('settings:play', name),

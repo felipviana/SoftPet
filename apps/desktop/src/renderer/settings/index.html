@@ -174,6 +174,51 @@
         border-color: var(--accent);
       }
 
+      textarea.prompt {
+        width: 100%;
+        min-height: 340px;
+        resize: vertical;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #131822;
+        color: var(--text);
+        font: 12px/1.5 Consolas, monospace;
+      }
+
+      .important {
+        padding: 10px 12px;
+        border-left: 3px solid var(--accent);
+        background: #131822;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .sheet-example {
+        margin: 14px 0;
+      }
+
+      .sheet-example img {
+        display: block;
+        width: min(100%, 620px);
+        margin: 0 auto;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background-color: #fff;
+        background-image:
+          linear-gradient(45deg, #ddd 25%, transparent 25%),
+          linear-gradient(-45deg, #ddd 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #ddd 75%),
+          linear-gradient(-45deg, transparent 75%, #ddd 75%);
+        background-size: 16px 16px;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+      }
+
+      .sheet-example figcaption {
+        margin-top: 8px;
+        color: var(--muted);
+        text-align: center;
+      }
+
       .row {
         display: flex;
         gap: 10px;
@@ -531,23 +576,98 @@
           <details class="help">
             <summary>Quer criar seu próprio pet?</summary>
             <div class="help-body">
-              <p>Um pet são só <strong>dois arquivos dentro de uma pasta</strong>:</p>
-              <ol>
-                <li>
-                  <code>pet.json</code> — a ficha dele. Um bloco de texto com o nome e uma
-                  descrição.
-                </li>
-                <li>
-                  <strong>uma imagem</strong> com todos os desenhos da animação lado a lado, como
-                  uma cartela de figurinhas.
-                </li>
-              </ol>
-
               <p>
-                A cartela tem <strong>1536 × 1872 pixels</strong>: <strong>8 colunas por 9
-                linhas</strong>, cada quadradinho medindo 192 × 208. Cada linha é uma animação, e
-                sempre nesta ordem:
+                Você pode pedir para uma IA preparar as artes ou desenhá-las por conta própria.
+                No final, o pet será uma pasta com apenas <strong>dois arquivos obrigatórios</strong>:
+                <code>pet.json</code> e <code>spritesheet.png</code>.
               </p>
+
+              <h3>Opção 1 — pedir para uma IA</h3>
+              <p class="important">
+                <strong>Anexe uma imagem do personagem junto com o texto abaixo.</strong> Sem uma
+                imagem de referência, a IA precisará adivinhar o rosto, a roupa e as cores, e o
+                resultado será bem menos parecido.
+              </p>
+              <p>
+                Substitua tudo que estiver entre colchetes e envie o prompt para uma IA que gere
+                imagens. Peça para ela criar as imagens separadas primeiro e somente depois montar
+                os arquivos do SoftPet.
+              </p>
+              <textarea id="create-pet-prompt" class="prompt" readonly>Quero criar um pet de área de trabalho para o aplicativo SoftPet.
+
+PERSONAGEM
+- Nome: [NOME DO SEU PERSONAGEM]
+- Descrição adicional: [DESCREVA ROUPA, CABELO, CORES E DETALHES IMPORTANTES]
+- Estilo desejado: [EXEMPLO: CHIBI, PIXEL ART OU DESENHO ANIMADO]
+
+IMPORTANTE: estou anexando uma imagem do personagem. Use essa imagem como referência principal e preserve rosto, cabelo, roupa, cores e acessórios. Se não houver imagem anexada, pare e peça uma antes de gerar, pois ela é necessária para maior precisão.
+
+Crie primeiro 8 imagens PNG separadas, todas com fundo realmente transparente, personagem inteiro e sem texto, assinatura, cenário ou sombra:
+1. Parado, em pose neutra.
+2. Correndo para a direita.
+3. Acenando.
+4. Pulando.
+5. Triste ou indicando que algo deu errado.
+6. Sentado e esperando ou dormindo.
+7. Trabalhando, usando um computador ou dispositivo.
+8. Comemorando uma tarefa concluída.
+
+Mantenha exatamente o mesmo personagem, proporções, traço e roupa nas 8 imagens. Mostre ou salve essas imagens separadas antes de continuar.
+
+Depois, monte uma spritesheet transparente de exatamente 1536 × 1872 pixels, dividida em 8 colunas e 9 linhas. Cada célula mede exatamente 192 × 208 pixels. Centralize o personagem dentro de cada célula, sem cortar nenhuma parte.
+
+Ordem das linhas:
+1. Parado — 6 quadros.
+2. Correndo para a direita — 8 quadros.
+3. Correndo para a esquerda — 8 quadros; pode espelhar a linha anterior.
+4. Acenando — 4 quadros.
+5. Pulando — 5 quadros.
+6. Erro ou tristeza — 8 quadros.
+7. Esperando ou dormindo — 6 quadros.
+8. Trabalhando — 6 quadros.
+9. Comemorando — 6 quadros.
+
+Use pequenas variações de movimento entre os quadros. As células não utilizadas no fim de uma linha devem permanecer totalmente transparentes.
+
+Salve a folha como spritesheet.png e crie, na mesma pasta, um arquivo de texto chamado pet.json com este conteúdo, substituindo os campos entre colchetes:
+
+{
+  "id": "[NOME CURTO, SEM ESPAÇOS, EM MINÚSCULAS]",
+  "displayName": "[NOME DO SEU PERSONAGEM]",
+  "description": "[DESCRIÇÃO CURTA DO PET]",
+  "spritesheetPath": "spritesheet.png"
+}
+
+Por fim, entregue uma pasta ou arquivo ZIP contendo pet.json e spritesheet.png. Antes de finalizar, confirme que a folha mede 1536 × 1872, possui transparência real e que o JSON é válido.</textarea>
+              <div class="row" style="margin-top: 10px">
+                <button id="copy-create-pet-prompt">Copiar prompt para IA</button>
+                <span class="note" id="copy-create-pet-status" aria-live="polite"></span>
+              </div>
+
+              <h3>Opção 2 — fazer as artes você mesmo</h3>
+              <p>Crie uma cartela de imagens com estas especificações:</p>
+              <ul>
+                <li>Formato recomendado: <strong>PNG com fundo transparente</strong>.</li>
+                <li>Também são aceitos arquivos <strong>WebP ou GIF</strong>.</li>
+                <li>Tamanho exato: <strong>1536 × 1872 pixels</strong>.</li>
+                <li>Grade: <strong>8 colunas × 9 linhas</strong>.</li>
+                <li>Cada quadradinho: <strong>192 × 208 pixels</strong>.</li>
+                <li>Não corte cabelo, pés, roupa ou acessórios nas bordas dos quadradinhos.</li>
+              </ul>
+
+              <figure class="sheet-example">
+                <img
+                  src="./joker-spritesheet-example.png"
+                  alt="Exemplo de uma cartela pronta do pet Joker, organizada em oito colunas e nove linhas"
+                  loading="lazy"
+                />
+                <figcaption>
+                  Exemplo pronto do Joker: leia da esquerda para a direita. Cada faixa horizontal
+                  é uma animação e cada quadradinho é um quadro do movimento.
+                </figcaption>
+              </figure>
+
+              <p>Cada linha da cartela representa uma situação, sempre nesta ordem:</p>
 
               <table class="help-rows">
                 <tr><td>Linha 1</td><td>parado (é a mais importante)</td></tr>
@@ -562,25 +682,14 @@
               </table>
 
               <p>
-                Sobrou quadradinho no fim de uma linha? Deixe transparente, sem desenho nenhum.
+                Se sobrarem quadradinhos no fim de uma linha, deixe-os totalmente transparentes.
               </p>
 
-              <p><strong>Três jeitos de conseguir os desenhos:</strong></p>
-              <ol>
-                <li>
-                  <strong>Peça a uma IA de imagem.</strong> Descreva o personagem e peça os
-                  desenhos nessas nove situações, em fundo transparente. É o caminho mais rápido
-                  para quem não desenha.
-                </li>
-                <li>
-                  <strong>Desenhe</strong>, se você ou alguém do time trabalha com pixel art.
-                </li>
-                <li>
-                  <strong>Aproveite um pet que você já tem.</strong> Abra a pasta abaixo, copie
-                  a cartela de um pet da Lojinha e pinte por cima: os tamanhos e as posições já
-                  estarão certos, que é a parte chata.
-                </li>
-              </ol>
+              <p>
+                Além da imagem, crie um arquivo de texto chamado <code>pet.json</code>. Você pode
+                copiar o modelo mostrado no prompt acima. O nome informado em
+                <code>spritesheetPath</code> precisa ser exatamente igual ao nome da sua imagem.
+              </p>
 
               <div class="row" style="margin-top: 12px">
                 <button id="open-library">Abrir a pasta dos meus pets</button>
@@ -591,10 +700,6 @@
                 <strong>Importar de uma pasta</strong> aqui em cima.
               </p>
 
-              <p>
-                Mais adiante o app vai fazer isso sozinho: você tira uma foto e ele desenha o
-                pet. Até lá, é por aqui.
-              </p>
             </div>
           </details>
         </section>
@@ -696,6 +801,18 @@
       <div class="pane" id="pane-app" hidden>
         <h1>Aplicativo</h1>
         <p class="sub">O pet continua na bandeja depois de fechar esta janela.</p>
+
+        <h2>Solução de problemas</h2>
+        <section>
+          <div class="row">
+            <button id="restart-pet" class="primary">Reiniciar pet</button>
+            <span id="restart-pet-status" class="note" style="margin: 0" aria-live="polite"></span>
+          </div>
+          <p class="note">
+            Use este botão se o pet travar, desaparecer ou apresentar algum comportamento estranho.
+            Ele será recarregado sem fechar o Softpet.
+          </p>
+        </section>
 
         <h2>Atualizações</h2>
         <section>

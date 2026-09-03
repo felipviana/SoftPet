@@ -817,6 +817,23 @@ function wire(): void {
     $('free-roam').setAttribute('aria-pressed', String(enabled))
   })
 
+  $('restart-pet').addEventListener('click', async () => {
+    const button = $<HTMLButtonElement>('restart-pet')
+    const status = $('restart-pet-status')
+    button.disabled = true
+    status.textContent = 'Reiniciando pet…'
+    try {
+      const restarted = await window.softpetSettings.restartPet()
+      status.textContent = restarted
+        ? 'Pet reiniciado e colocado acima das outras janelas.'
+        : 'Nenhum pet está ativo. Escolha um pet primeiro.'
+    } catch (error) {
+      status.textContent = `Não foi possível reiniciar: ${(error as Error).message}`
+    } finally {
+      button.disabled = false
+    }
+  })
+
   $('check-updates').addEventListener('click', async () => {
     const button = $<HTMLButtonElement>('check-updates')
     const status = $('update-status')
@@ -922,6 +939,19 @@ function wire(): void {
   })
 
   $('open-library').addEventListener('click', () => window.softpetSettings.openLibraryFolder())
+
+  $('copy-create-pet-prompt').addEventListener('click', async () => {
+    const prompt = $<HTMLTextAreaElement>('create-pet-prompt')
+    const status = $('copy-create-pet-status')
+    try {
+      await navigator.clipboard.writeText(prompt.value)
+      status.textContent = 'Prompt copiado! Agora cole na IA e anexe a imagem do personagem.'
+    } catch {
+      prompt.focus()
+      prompt.select()
+      status.textContent = 'O texto foi selecionado. Pressione Ctrl+C para copiar.'
+    }
+  })
 
   $('quit').addEventListener('click', () => window.softpetSettings.quit())
 
