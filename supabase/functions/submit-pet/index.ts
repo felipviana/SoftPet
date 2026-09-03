@@ -84,7 +84,7 @@ Deno.serve(async (request) => {
       request_fingerprint: fingerprint,
     })
     if (slot.error) throw slot.error
-    if (slot.data !== true) return json({ error: 'Limite de 3 envios por dia atingido.' }, 429)
+    if (slot.data !== true) return json({ error: 'Limite de 10 envios por dia atingido.' }, 429)
 
     const manifestText = await manifestFile.text()
     const manifest = JSON.parse(manifestText) as Record<string, unknown>
