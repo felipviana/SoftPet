@@ -40,7 +40,15 @@ import { loadPet, type LoadedPet } from './pet-loader.js'
 import { SettingsWindow } from './settings-window.js'
 import { SettingsStore } from './store.js'
 import { createTray } from './tray.js'
-import { startAutoUpdate } from './auto-update.js'
+import { checkForUpdatesManually, startAutoUpdate } from './auto-update.js'
+import {
+  CommunityError,
+  communityFiles,
+  communityPreview,
+  isCommunityPetNameAvailable,
+  listCommunityPets,
+  submitCommunityPet,
+} from './community.js'
 
 // Uma segunda instancia significaria dois pets na tela disputando a mesma
 // posicao salva.
@@ -191,7 +199,9 @@ function registerOverlayIpc(): void {
   ipcMain.on('overlay:drag-end', () => overlay?.dragEnd())
 
   ipcMain.on('overlay:move-by', (_event, deltaX: unknown) => {
-    if (typeof deltaX === 'number' && Number.isFinite(deltaX)) overlay?.moveBy(deltaX)
+    if (typeof deltaX === 'number' && Number.isFinite(deltaX)) {
+      overlay?.moveAutonomouslyBy(deltaX)
+    }
   })
 
   ipcMain.on('overlay:action', (_event, notificationId: unknown, actionId: unknown) => {
@@ -208,6 +218,7 @@ function registerSettingsIpc(): void {
       activePetId: pet?.manifest.id ?? null,
       displaySize: store.get('displaySize'),
       displaySizeRange: { min: DISPLAY_SIZE.min, max: DISPLAY_SIZE.max },
+      freeRoam: store.get('freeRoam'),
       overlayVisible: overlay?.isVisible ?? false,
       animations: pet === null ? [] : Object.keys(pet.manifest.animations).sort(),
       debugNotifications: DEBUG_NOTIFICATIONS.map((entry) => ({
@@ -370,7 +381,43 @@ function registerSettingsIpc(): void {
     if (typeof size === 'number' && Number.isFinite(size)) overlay?.setDisplaySize(size)
   })
 
+  ipcMain.handle('settings:community-list', () => listCommunityPets())
+
+  ipcMain.handle('settings:community-preview', (_event, id: string) => communityPreview(id))
+
+  ipcMain.handle('settings:community-install', async (_event, id: string) => {
+    const { row, files } = await communityFiles(id)
+    const installed = await installFromFiles(
+      row.slug,
+      files,
+      `Comunidade Soft — ${row.author_name}`,
+    )
+    settingsWindow.notifyChanged()
+    return toInfo(installed, store.get('activePetId'))
+  })
+
+  ipcMain.handle('settings:community-name-available', (_event, name: unknown) =>
+    isCommunityPetNameAvailable(typeof name === 'string' ? name : ''),
+  )
+
+  ipcMain.handle('settings:community-submit', async (_event, petName: unknown, authorName: unknown) => {
+    const normalizedName = typeof petName === 'string' ? petName.trim() : ''
+    if (normalizedName === '') throw new CommunityError('Informe o nome do seu pet.')
+    const dir = await askForPetDirectory()
+    if (dir === null) return false
+    await submitCommunityPet(dir, normalizedName, typeof authorName === 'string' ? authorName : '')
+    return true
+  })
+
+  ipcMain.handle('settings:toggle-free-roam', () => {
+    const enabled = !store.get('freeRoam')
+    store.set('freeRoam', enabled)
+    return enabled
+  })
+
   ipcMain.handle('settings:toggle-overlay', () => overlay?.toggleVisibility() ?? false)
+
+  ipcMain.handle('settings:check-updates', () => checkForUpdatesManually())
 
   ipcMain.on('settings:play', (_event, name: unknown) => {
     if (typeof name === 'string') overlay?.play(name)

@@ -1,4 +1,5 @@
 import type {
+  CommunityPetInfo,
   InstalledPetInfo,
   PetSourceInfo,
   RepoListingInfo,
@@ -39,6 +40,7 @@ function setupTabs(): void {
         other.setAttribute('aria-current', String(name === target))
         $(`pane-${name}`).hidden = name !== target
       }
+      if (target === 'community') void renderCommunity()
     })
   }
 }
@@ -102,6 +104,9 @@ async function renderState(): Promise<void> {
   size.value = String(state.displaySize)
   $('size-value').textContent = `${state.displaySize} px`
   $('toggle').textContent = state.overlayVisible ? 'Ocultar' : 'Mostrar'
+  const freeRoam = $('free-roam')
+  freeRoam.textContent = state.freeRoam ? 'Andar livre: ativado' : 'Andar livre: desativado'
+  freeRoam.setAttribute('aria-pressed', String(state.freeRoam))
 
   const animations = $('animations')
   animations.replaceChildren(
@@ -228,6 +233,137 @@ async function renderLibrary(): Promise<void> {
 
 async function refresh(): Promise<void> {
   await Promise.all([renderState(), renderLibrary(), renderSources()])
+}
+
+// --------------------------------------------------------------- comunidade
+
+let communityPets: CommunityPetInfo[] | null = null
+let communityNameTimer: number | undefined
+let communityNameCheck = 0
+
+async function validateCommunityPetName(): Promise<boolean> {
+  const field = $<HTMLInputElement>('community-pet-name')
+  const status = $('community-name-status')
+  const name = field.value.trim()
+  const check = ++communityNameCheck
+
+  if (name === '') {
+    status.textContent = 'Informe o nome do seu pet.'
+    return false
+  }
+
+  status.textContent = 'Verificando nome…'
+  try {
+    const available = await window.softpetSettings.checkCommunityPetName(name)
+    if (check !== communityNameCheck) return false
+    status.textContent = available ? 'Nome disponível.' : 'Já existe um pet com esse nome.'
+    return available
+  } catch (error) {
+    if (check !== communityNameCheck) return false
+    status.textContent = `Não foi possível verificar o nome: ${(error as Error).message}`
+    return false
+  }
+}
+
+async function drawCommunityPreview(canvas: HTMLCanvasElement, id: string): Promise<void> {
+  try {
+    const { sheet, sheetFormat, frame } = await window.softpetSettings.getCommunityPreview(id)
+    const bitmap = await createImageBitmap(
+      new Blob([sheet as BlobPart], { type: `image/${sheetFormat}` }),
+    )
+    const context = canvas.getContext('2d')
+    if (context === null) return
+    const scale = Math.min(canvas.width / frame.width, canvas.height / frame.height)
+    context.imageSmoothingEnabled = false
+    context.drawImage(
+      bitmap,
+      0,
+      0,
+      frame.width,
+      frame.height,
+      (canvas.width - frame.width * scale) / 2,
+      (canvas.height - frame.height * scale) / 2,
+      frame.width * scale,
+      frame.height * scale,
+    )
+  } catch {
+    // A listagem continua util se uma miniatura isolada estiver indisponivel.
+  }
+}
+
+function paintCommunity(): void {
+  const container = $('community-list')
+  const pets = communityPets ?? []
+  const needle = $<HTMLInputElement>('community-search').value.trim().toLocaleLowerCase('pt-BR')
+  const shown = pets.filter((pet) =>
+    `${pet.displayName} ${pet.authorName}`.toLocaleLowerCase('pt-BR').includes(needle),
+  )
+
+  if (shown.length === 0) {
+    const empty = document.createElement('p')
+    empty.className = 'note'
+    empty.textContent = pets.length === 0 ? 'Nenhum pet aprovado ainda.' : 'Nenhum pet encontrado.'
+    container.replaceChildren(empty)
+    return
+  }
+
+  const list = document.createElement('div')
+  list.className = 'repo-list'
+  for (const pet of shown) {
+    const item = document.createElement('div')
+    item.className = 'repo-item'
+
+    const canvas = document.createElement('canvas')
+    canvas.className = 'repo-thumb'
+    canvas.width = THUMB_SIZE
+    canvas.height = THUMB_SIZE
+    void drawCommunityPreview(canvas, pet.id)
+
+    const name = document.createElement('div')
+    name.className = 'repo-name'
+    name.textContent = pet.displayName
+    name.title = pet.description ?? pet.displayName
+
+    const author = document.createElement('div')
+    author.className = 'repo-author'
+    author.textContent = `por ${pet.authorName}`
+
+    const install = document.createElement('button')
+    install.textContent = 'Instalar'
+    install.addEventListener('click', async () => {
+      install.disabled = true
+      install.textContent = 'Instalando…'
+      try {
+        await window.softpetSettings.installCommunityPet(pet.id)
+        install.textContent = 'Instalado'
+        await refresh()
+      } catch (error) {
+        install.disabled = false
+        install.textContent = 'Instalar'
+        setError('community-error', (error as Error).message)
+      }
+    })
+
+    item.append(canvas, name, author, install)
+    list.append(item)
+  }
+  container.replaceChildren(list)
+}
+
+async function renderCommunity(force = false): Promise<void> {
+  if (communityPets !== null && !force) {
+    paintCommunity()
+    return
+  }
+  $('community-list').textContent = 'Carregando…'
+  setError('community-error', null)
+  try {
+    communityPets = await window.softpetSettings.listCommunityPets()
+    paintCommunity()
+  } catch (error) {
+    $('community-list').replaceChildren()
+    setError('community-error', (error as Error).message)
+  }
 }
 
 // ----------------------------------------------------------------- fontes
@@ -673,6 +809,63 @@ function wire(): void {
   $('toggle').addEventListener('click', async () => {
     const visible = await window.softpetSettings.toggleOverlay()
     $('toggle').textContent = visible ? 'Ocultar' : 'Mostrar'
+  })
+
+  $('free-roam').addEventListener('click', async () => {
+    const enabled = await window.softpetSettings.toggleFreeRoam()
+    $('free-roam').textContent = enabled ? 'Andar livre: ativado' : 'Andar livre: desativado'
+    $('free-roam').setAttribute('aria-pressed', String(enabled))
+  })
+
+  $('check-updates').addEventListener('click', async () => {
+    const button = $<HTMLButtonElement>('check-updates')
+    const status = $('update-status')
+    button.disabled = true
+    status.textContent = 'Buscando atualizações…'
+
+    try {
+      const result = await window.softpetSettings.checkForUpdates()
+      if (result.status === 'development') {
+        status.textContent = 'A busca real funciona no executável instalado.'
+      } else if (result.status === 'up-to-date') {
+        status.textContent = `Você já está na versão mais recente (${result.currentVersion}).`
+      } else {
+        status.textContent = `Versão ${result.availableVersion} encontrada. Baixando em segundo plano…`
+      }
+    } catch (error) {
+      status.textContent = `Não foi possível buscar atualizações: ${(error as Error).message}`
+    } finally {
+      button.disabled = false
+    }
+  })
+
+  $<HTMLInputElement>('community-search').addEventListener('input', paintCommunity)
+  $('community-refresh').addEventListener('click', () => {
+    communityPets = null
+    void renderCommunity(true)
+  })
+  $<HTMLInputElement>('community-pet-name').addEventListener('input', () => {
+    window.clearTimeout(communityNameTimer)
+    communityNameTimer = window.setTimeout(() => void validateCommunityPetName(), 400)
+  })
+  $('community-submit').addEventListener('click', async () => {
+    const button = $<HTMLButtonElement>('community-submit')
+    const status = $('community-submit-status')
+    status.textContent = ''
+    setError('community-submit-error', null)
+    if (!(await validateCommunityPetName())) return
+    button.disabled = true
+    try {
+      const sent = await window.softpetSettings.submitCommunityPet(
+        $<HTMLInputElement>('community-pet-name').value,
+        $<HTMLInputElement>('community-author').value,
+      )
+      status.textContent = sent ? 'Pet enviado! Ele aparecerá na galeria após a aprovação.' : ''
+    } catch (error) {
+      setError('community-submit-error', (error as Error).message)
+    } finally {
+      button.disabled = false
+    }
   })
 
   $('import-folder').addEventListener('click', async () => {

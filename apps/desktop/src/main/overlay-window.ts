@@ -47,7 +47,9 @@ export class OverlayWindow {
   readonly #frame: FrameSize
   readonly #window: BrowserWindow
   #layout: StageLayout
-  #interactive = false
+  // `null` garante que a primeira chamada com `false` configure de fato o
+  // click-through. Comecar em `false` fazia a inicializacao retornar cedo.
+  #interactive: boolean | null = null
   #dragOffset: Point | null = null
   #dragTimer: NodeJS.Timeout | null = null
   #dragDirection: DragDirection | null = null
@@ -88,17 +90,20 @@ export class OverlayWindow {
       },
     })
 
-    // 'floating' mantem o pet acima das janelas comuns sem competir com
-    // notificacoes do sistema.
-    this.#window.setAlwaysOnTop(true, 'floating')
-    this.#window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: false })
+    this.#keepOnTop()
     this.setInteractive(false)
 
-    this.#window.once('ready-to-show', () => this.#window.showInactive())
+    this.#window.once('ready-to-show', () => {
+      this.#keepOnTop()
+      this.#window.showInactive()
+    })
+    // Algumas janelas do Windows promovem o proprio nivel ao serem ativadas.
+    // Reafirmar o nivel quando o overlay volta a aparecer impede o pet de ficar
+    // preso atras delas, sem roubar o foco do usuario.
+    this.#window.on('show', () => this.#keepOnTop())
 
     if (isDev) {
       void this.#window.loadURL(`${process.env['ELECTRON_RENDERER_URL']}/overlay/index.html`)
-      this.#window.webContents.openDevTools({ mode: 'detach' })
     } else {
       void this.#window.loadFile(join(__dirname, '../renderer/overlay/index.html'))
     }
@@ -132,8 +137,14 @@ export class OverlayWindow {
    * para ele virar — o renderer nao tem como saber onde acaba a area de
    * trabalho.
    */
-  moveBy(deltaX: number): void {
-    if (this.#dragOffset !== null || this.#window.isDestroyed()) return
+  moveAutonomouslyBy(deltaX: number): void {
+    if (
+      !this.#store.get('freeRoam') ||
+      this.#dragOffset !== null ||
+      this.#window.isDestroyed()
+    ) {
+      return
+    }
     const pet = this.#petPosition()
     const blocked = this.#setPetPosition({ x: pet.x + deltaX, y: pet.y })
     // Onde o pet parou de caminhar tambem e "onde o usuario o deixou": sem isto,
@@ -155,6 +166,10 @@ export class OverlayWindow {
    */
   dragStart(offset: Point): void {
     if (this.#dragTimer !== null) this.dragEnd()
+    // O arrasto e uma ordem direta do usuario e independe de `freeRoam`.
+    // Garantir a interatividade aqui tambem evita que uma mudanca de estado do
+    // click-through interrompa o gesto entre o pointerdown e o primeiro tick.
+    this.setInteractive(true)
     this.#dragOffset = offset
     this.#dragDirection = null
     this.#lastCursorX = screen.getCursorScreenPoint().x
@@ -226,6 +241,13 @@ export class OverlayWindow {
   destroy(): void {
     if (this.#dragTimer !== null) clearInterval(this.#dragTimer)
     if (!this.#window.isDestroyed()) this.#window.destroy()
+  }
+
+  /** Mantem o pet acima inclusive de aplicativos que tambem usam always-on-top. */
+  #keepOnTop(): void {
+    if (this.#window.isDestroyed()) return
+    this.#window.setAlwaysOnTop(true, 'screen-saver')
+    this.#window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
   }
 
   // --- posicionamento -------------------------------------------------------

@@ -1,0 +1,5 @@
+project_id = "xhjeutrxmvplkasdxmcx"
+
+[functions.submit-pet]
+verify_jwt = false
+

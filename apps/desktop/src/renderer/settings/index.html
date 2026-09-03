@@ -477,6 +477,7 @@
       <div class="brand">Softpet</div>
       <button data-pane="pet" aria-current="true">Meu pet</button>
       <button data-pane="store">Lojinha de pets</button>
+      <button data-pane="community">Pets da comunidade Soft</button>
       <button data-pane="debug">Depuração</button>
       <div class="spacer"></div>
       <button data-pane="app">Aplicativo</button>
@@ -500,6 +501,10 @@
                 <input type="range" id="size" min="60" max="360" step="10" style="flex: 1" />
                 <span id="size-value" style="width: 48px; text-align: right"></span>
                 <button id="toggle">Ocultar</button>
+              </div>
+              <div class="row" style="margin-top: 10px">
+                <button id="free-roam" aria-pressed="true">Andar livre: ativado</button>
+                <span class="note" style="margin: 0">Desative para manter o pet no lugar sem parar suas animações.</span>
               </div>
             </div>
           </div>
@@ -638,6 +643,37 @@
         </section>
       </div>
 
+      <!-- ----------------------------------------- Pets da comunidade Soft -->
+      <div class="pane" id="pane-community" hidden>
+        <h1>Pets da comunidade Soft</h1>
+        <p class="sub">Pets criados e compartilhados por usuários do Softpet.</p>
+
+        <h2>Compartilhar meu pet</h2>
+        <section>
+          <div class="row">
+            <input id="community-author" type="text" maxlength="60" placeholder="Seu nome (opcional)" />
+          </div>
+          <div class="row">
+            <input id="community-pet-name" type="text" maxlength="80" placeholder="Nome do seu pet" required />
+            <button id="community-submit" class="primary">Publicar meu pet…</button>
+          </div>
+          <p class="note" id="community-name-status" aria-live="polite"></p>
+          <p class="note">Você escolhe a pasta do pet. O envio será analisado antes de aparecer para outras pessoas.</p>
+          <p class="error" id="community-submit-error" hidden></p>
+          <p class="note" id="community-submit-status" aria-live="polite"></p>
+        </section>
+
+        <h2>Galeria</h2>
+        <section>
+          <div class="row">
+            <input id="community-search" type="text" placeholder="Buscar por nome ou autor…" />
+            <button id="community-refresh">Atualizar</button>
+          </div>
+          <div id="community-list"></div>
+          <p class="error" id="community-error" hidden></p>
+        </section>
+      </div>
+
       <!-- ------------------------------------------------ Depuração -->
       <div class="pane" id="pane-debug" hidden>
         <h1>Depuração</h1>
@@ -660,6 +696,17 @@
       <div class="pane" id="pane-app" hidden>
         <h1>Aplicativo</h1>
         <p class="sub">O pet continua na bandeja depois de fechar esta janela.</p>
+
+        <h2>Atualizações</h2>
+        <section>
+          <div class="row">
+            <button id="check-updates" class="primary">Buscar atualizações</button>
+            <span id="update-status" class="note" style="margin: 0" aria-live="polite"></span>
+          </div>
+          <p class="note">O Softpet também verifica automaticamente ao iniciar e a cada quatro horas.</p>
+        </section>
+
+        <h2>Encerrar</h2>
         <section>
           <button id="quit">Sair do Softpet</button>
         </section>

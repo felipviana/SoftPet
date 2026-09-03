@@ -21,6 +21,8 @@ export interface Settings {
   activePetId: string | null
   /** Lado do quadrado em que o pet e desenhado, em DIP. */
   displaySize: number
+  /** Permite que o comportamento autonomo desloque o pet pela tela. */
+  freeRoam: boolean
   /**
    * Canto superior esquerdo **do pet**, nao da janela. Nulo = posicao inicial.
    *
@@ -43,6 +45,7 @@ export interface Settings {
 const DEFAULTS: Settings = {
   activePetId: null,
   displaySize: DISPLAY_SIZE.default,
+  freeRoam: true,
   petPosition: null,
   githubToken: null,
   petSources: [],
@@ -98,6 +101,7 @@ export class SettingsStore {
       return {
         activePetId: readActivePetId(stored),
         displaySize: clampDisplaySize(stored.displaySize),
+        freeRoam: typeof stored.freeRoam === 'boolean' ? stored.freeRoam : DEFAULTS.freeRoam,
         petPosition: isPoint(stored.petPosition) ? stored.petPosition : DEFAULTS.petPosition,
         githubToken: typeof stored.githubToken === 'string' ? stored.githubToken : null,
         petSources: Array.isArray(stored.petSources) ? stored.petSources.filter(isSource) : [],

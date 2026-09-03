@@ -1,7 +1,26 @@
 import { app, dialog } from 'electron'
 import { autoUpdater } from 'electron-updater'
 
+import type { ManualUpdateResult } from '../shared/settings-ipc.js'
+
 const CHECK_INTERVAL = 4 * 60 * 60 * 1_000
+
+/** Verificacao iniciada pelo usuario no menu do aplicativo. */
+export async function checkForUpdatesManually(): Promise<ManualUpdateResult> {
+  const currentVersion = app.getVersion()
+  if (!app.isPackaged) return { status: 'development', currentVersion }
+
+  const result = await autoUpdater.checkForUpdates()
+  if (result === null || !result.isUpdateAvailable) {
+    return { status: 'up-to-date', currentVersion }
+  }
+
+  return {
+    status: 'available',
+    currentVersion,
+    availableVersion: result.updateInfo.version,
+  }
+}
 
 /**
  * Mantem o executavel sincronizado com a release publica mais recente.

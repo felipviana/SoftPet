@@ -9,12 +9,14 @@ import type {
 } from '../shared/ipc.js'
 import type {
   InstalledPetInfo,
+  CommunityPetInfo,
   PetPreview,
   PetSourceInfo,
   RepoPreviewInfo,
   UrlProbe,
   SettingsApi,
   SettingsState,
+  ManualUpdateResult,
 } from '../shared/settings-ipc.js'
 
 const api: SoftpetApi = {
@@ -77,9 +79,22 @@ const settings: SettingsApi = {
     ipcRenderer.invoke('settings:import-petdex', slug) as Promise<InstalledPetInfo>,
   importFromUrl: (url) =>
     ipcRenderer.invoke('settings:import-url', url) as Promise<InstalledPetInfo>,
+  listCommunityPets: () =>
+    ipcRenderer.invoke('settings:community-list') as Promise<CommunityPetInfo[]>,
+  getCommunityPreview: (id) =>
+    ipcRenderer.invoke('settings:community-preview', id) as Promise<PetPreview>,
+  installCommunityPet: (id) =>
+    ipcRenderer.invoke('settings:community-install', id) as Promise<InstalledPetInfo>,
+  checkCommunityPetName: (name) =>
+    ipcRenderer.invoke('settings:community-name-available', name) as Promise<boolean>,
+  submitCommunityPet: (petName, authorName) =>
+    ipcRenderer.invoke('settings:community-submit', petName, authorName) as Promise<boolean>,
 
   setDisplaySize: (size) => ipcRenderer.send('settings:display-size', size),
+  toggleFreeRoam: () => ipcRenderer.invoke('settings:toggle-free-roam') as Promise<boolean>,
   toggleOverlay: () => ipcRenderer.invoke('settings:toggle-overlay') as Promise<boolean>,
+  checkForUpdates: () =>
+    ipcRenderer.invoke('settings:check-updates') as Promise<ManualUpdateResult>,
   playAnimation: (name) => ipcRenderer.send('settings:play', name),
   fireNotification: (id) => ipcRenderer.send('settings:notify', id),
   setGitHubToken: (value) =>

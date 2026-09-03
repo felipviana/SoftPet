@@ -79,10 +79,30 @@ export interface DebugNotificationInfo {
   readonly label: string
 }
 
+export interface CommunityPetInfo {
+  readonly id: string
+  readonly slug: string
+  readonly displayName: string
+  readonly description?: string
+  readonly authorName: string
+  readonly downloads: number
+  readonly createdAt: string
+}
+
+export type ManualUpdateResult =
+  | { readonly status: 'development'; readonly currentVersion: string }
+  | { readonly status: 'up-to-date'; readonly currentVersion: string }
+  | {
+      readonly status: 'available'
+      readonly currentVersion: string
+      readonly availableVersion: string
+    }
+
 export interface SettingsState {
   readonly activePetId: string | null
   readonly displaySize: number
   readonly displaySizeRange: { readonly min: number; readonly max: number }
+  readonly freeRoam: boolean
   readonly overlayVisible: boolean
   /** Animacoes que o pet ativo conhece, para o painel de depuracao. */
   readonly animations: readonly string[]
@@ -118,8 +138,17 @@ export interface SettingsApi {
   /** Link direto para um .zip ou um pet.json, de qualquer site. */
   importFromUrl(url: string): Promise<InstalledPetInfo>
 
+  listCommunityPets(): Promise<CommunityPetInfo[]>
+  getCommunityPreview(id: string): Promise<PetPreview>
+  installCommunityPet(id: string): Promise<InstalledPetInfo>
+  checkCommunityPetName(name: string): Promise<boolean>
+  /** Seleciona, valida e envia uma pasta. `false` quando o usuario cancela. */
+  submitCommunityPet(petName: string, authorName: string): Promise<boolean>
+
   setDisplaySize(size: number): void
+  toggleFreeRoam(): Promise<boolean>
   toggleOverlay(): Promise<boolean>
+  checkForUpdates(): Promise<ManualUpdateResult>
   playAnimation(name: string): void
   fireNotification(id: string): void
   /** Token pessoal do GitHub; vazio remove. */
